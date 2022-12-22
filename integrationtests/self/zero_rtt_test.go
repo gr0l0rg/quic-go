@@ -107,7 +107,7 @@ var _ = Describe("0-RTT", func() {
 				clientConf *quic.Config,
 				testdata []byte, // data to transfer
 			) {
-				// now dial the second connection, and use 0-RTT to send some data
+				// accept the second connection, and receive the data sent in 0-RTT
 				done := make(chan struct{})
 				go func() {
 					defer GinkgoRecover()
@@ -119,7 +119,7 @@ var _ = Describe("0-RTT", func() {
 					Expect(err).ToNot(HaveOccurred())
 					Expect(data).To(Equal(testdata))
 					Expect(conn.ConnectionState().TLS.Used0RTT).To(BeTrue())
-					Expect(conn.CloseWithError(0, "")).To(Succeed())
+					<-conn.Context().Done()
 					close(done)
 				}()
 
@@ -140,6 +140,7 @@ var _ = Describe("0-RTT", func() {
 				Expect(str.Close()).To(Succeed())
 				<-conn.HandshakeComplete().Done()
 				Expect(conn.ConnectionState().TLS.Used0RTT).To(BeTrue())
+				conn.CloseWithError(0, "")
 				Eventually(done).Should(BeClosed())
 				Eventually(conn.Context().Done()).Should(BeClosed())
 			}
