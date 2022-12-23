@@ -5,11 +5,11 @@ go 1.18
 require (
 	github.com/francoispqt/gojay v1.2.13
 	github.com/golang/mock v1.6.0
-	github.com/marten-seemann/qpack v0.3.0
 	github.com/marten-seemann/qtls-go1-18 v0.1.3
 	github.com/marten-seemann/qtls-go1-19 v0.1.1
 	github.com/onsi/ginkgo/v2 v2.2.0
 	github.com/onsi/gomega v1.20.1
+	github.com/quic-go/qpack v0.4.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
