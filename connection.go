@@ -282,7 +282,6 @@ var newConnection = func(
 		runner.ReplaceWithClosed,
 		s.queueControlFrame,
 		s.config.ConnectionIDGenerator,
-		s.version,
 	)
 	s.preSetup()
 	s.ctx, s.ctxCancel = context.WithCancel(context.WithValue(context.Background(), ConnectionTracingKey, tracingID))
@@ -412,7 +411,6 @@ var newClientConnection = func(
 		runner.ReplaceWithClosed,
 		s.queueControlFrame,
 		s.config.ConnectionIDGenerator,
-		s.version,
 	)
 	s.preSetup()
 	s.ctx, s.ctxCancel = context.WithCancel(context.WithValue(context.Background(), ConnectionTracingKey, tracingID))
