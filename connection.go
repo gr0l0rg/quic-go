@@ -358,7 +358,6 @@ var newConnection = func(
 		s.receivedPacketHandler,
 		s.datagramQueue,
 		s.perspective,
-		s.version,
 	)
 	s.unpacker = newPacketUnpacker(cs, s.srcConnIDLen)
 	s.cryptoStreamManager = newCryptoStreamManager(cs, initialStream, handshakeStream, s.oneRTTStream)
@@ -484,7 +483,6 @@ var newClientConnection = func(
 		s.receivedPacketHandler,
 		s.datagramQueue,
 		s.perspective,
-		s.version,
 	)
 	if len(tlsConf.ServerName) > 0 {
 		s.tokenStoreKey = tlsConf.ServerName
@@ -1812,7 +1810,7 @@ func (s *connection) sendPackets() error {
 
 func (s *connection) maybeSendAckOnlyPacket() error {
 	if !s.handshakeConfirmed {
-		packet, err := s.packer.PackCoalescedPacket(true)
+		packet, err := s.packer.PackCoalescedPacket(true, s.version)
 		if err != nil {
 			return err
 		}
@@ -1828,7 +1826,7 @@ func (s *connection) maybeSendAckOnlyPacket() error {
 		return nil
 	}
 
-	packet, err := s.packer.PackPacket(true)
+	packet, err := s.packer.PackPacket(true, s.version)
 	if err != nil {
 		return err
 	}
@@ -1848,7 +1846,7 @@ func (s *connection) sendProbePacket(encLevel protocol.EncryptionLevel) error {
 			break
 		}
 		var err error
-		packet, err = s.packer.MaybePackProbePacket(encLevel)
+		packet, err = s.packer.MaybePackProbePacket(encLevel, s.version)
 		if err != nil {
 			return err
 		}
@@ -1869,7 +1867,7 @@ func (s *connection) sendProbePacket(encLevel protocol.EncryptionLevel) error {
 			panic("unexpected encryption level")
 		}
 		var err error
-		packet, err = s.packer.MaybePackProbePacket(encLevel)
+		packet, err = s.packer.MaybePackProbePacket(encLevel, s.version)
 		if err != nil {
 			return err
 		}
@@ -1889,7 +1887,7 @@ func (s *connection) sendPacket() (bool, error) {
 
 	now := time.Now()
 	if !s.handshakeConfirmed {
-		packet, err := s.packer.PackCoalescedPacket(false)
+		packet, err := s.packer.PackCoalescedPacket(false, s.version)
 		if err != nil || packet == nil {
 			return false, err
 		}
@@ -1906,14 +1904,15 @@ func (s *connection) sendPacket() (bool, error) {
 		return true, nil
 	}
 	if !s.config.DisablePathMTUDiscovery && s.mtuDiscoverer.ShouldSendProbe(now) {
-		packet, err := s.packer.PackMTUProbePacket(s.mtuDiscoverer.GetPing())
+		ping, size := s.mtuDiscoverer.GetPing()
+		packet, err := s.packer.PackMTUProbePacket(ping, size, s.version)
 		if err != nil {
 			return false, err
 		}
 		s.sendPackedPacket(packet, now)
 		return true, nil
 	}
-	packet, err := s.packer.PackPacket(false)
+	packet, err := s.packer.PackPacket(false, s.version)
 	if err != nil || packet == nil {
 		return false, err
 	}
@@ -1937,14 +1936,14 @@ func (s *connection) sendConnectionClose(e error) ([]byte, error) {
 	var transportErr *qerr.TransportError
 	var applicationErr *qerr.ApplicationError
 	if errors.As(e, &transportErr) {
-		packet, err = s.packer.PackConnectionClose(transportErr)
+		packet, err = s.packer.PackConnectionClose(transportErr, s.version)
 	} else if errors.As(e, &applicationErr) {
-		packet, err = s.packer.PackApplicationClose(applicationErr)
+		packet, err = s.packer.PackApplicationClose(applicationErr, s.version)
 	} else {
 		packet, err = s.packer.PackConnectionClose(&qerr.TransportError{
 			ErrorCode:    qerr.InternalError,
 			ErrorMessage: fmt.Sprintf("connection BUG: unspecified error type (msg: %s)", e.Error()),
-		})
+		}, s.version)
 	}
 	if err != nil {
 		return nil, err
