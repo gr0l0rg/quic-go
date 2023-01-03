@@ -96,10 +96,14 @@ var _ = Describe("Send Queue", func() {
 		<-written
 
 		// now fill up the send queue
-		for i := 0; i < sendQueueCapacity+1; i++ {
+		for i := 0; i < sendQueueCapacity; i++ {
 			Expect(q.WouldBlock()).To(BeFalse())
 			q.Send(getPacket([]byte("foobar")))
 		}
+		// One more packet is queued when it's picked up by Run and written to the connection.
+		// In this test, it's blocked on write channel in the mocked Write call.
+		Eventually(q.WouldBlock()).Should(BeFalse())
+		q.Send(getPacket([]byte("foobar")))
 
 		Expect(q.WouldBlock()).To(BeTrue())
 		Consistently(q.Available()).ShouldNot(Receive())
