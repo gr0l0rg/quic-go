@@ -260,7 +260,7 @@ func newCryptoSetup(
 		alertChan:                 make(chan uint8),
 		clientHelloWrittenChan:    make(chan struct{}),
 		zeroRTTParametersChan:     zeroRTTParametersChan,
-		messageChan:               make(chan []byte, 100),
+		messageChan:               make(chan []byte, 1),
 		isReadingHandshakeMessage: make(chan struct{}),
 		closeChan:                 make(chan struct{}),
 		version:                   version,
