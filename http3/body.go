@@ -63,6 +63,10 @@ func (r *body) wasStreamHijacked() bool {
 }
 
 func (r *body) Read(b []byte) (int, error) {
+	
+
+	
+	
 	return r.str.Read(b)
 }
 
